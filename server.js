@@ -1,6 +1,7 @@
 const connection = require('./connection');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
+const { connect } = require('./connection');
 
 const options = () => {
     inquirer
@@ -33,7 +34,7 @@ const options = () => {
         } else if (response.action === 'Add a Role') {
             console.log('Add a Role');
         } else if (response.action === 'View All Departments') {
-            console.log('View All Departments')
+            viewAllDepartments();
         } else if (response.action === 'Add a Department') {
             console.log('Add a Department')
         } else if (response.action === 'Exit') {
@@ -64,5 +65,17 @@ const viewAllRoles = async () => {
     } catch (error) {
         console.error(error);
     } 
+};
+
+const viewAllDepartments = async () => {
+    try {
+        const deptSQL = "SELECT id AS 'ID', name AS 'Name' FROM department;";
+        const [ departments ] = await connection.query(deptSQL);
+        console.log('\n-----View All Departments-----\n');
+        console.table(departments);
+        options();
+    } catch (error) {
+        console.error(error);
+    }
 }
 options();
