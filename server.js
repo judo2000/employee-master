@@ -32,7 +32,7 @@ const options = () => {
         } else if (response.action === 'View All Roles') {
             viewAllRoles();
         } else if (response.action === 'Add a Role') {
-            console.log('Add a Role');
+            addRole();
         } else if (response.action === 'View All Departments') {
             viewAllDepartments();
         } else if (response.action === 'Add a Department') {
@@ -65,6 +65,60 @@ const viewAllRoles = async () => {
     } catch (error) {
         console.error(error);
     } 
+};
+
+const addRole = () => {
+    inquirer 
+        .prompt([
+        {
+            type: 'input',
+            name: 'newRoleName',
+            message: 'What is the name of the new role?',
+        },
+        {
+            type: 'input',
+            name: 'newSalary',
+            message: 'What is the salary for this role?',
+        },
+    ])
+    .then(answer => {
+        (async  () => {
+            try {
+                const roleFields = [answer.newRoleName, Number(answer.newSalary)];
+                const deptList = "SELECT id, name FROM department"
+                const [ result ] = await connection.query(deptList);
+                const dept = result.map(({ name, id }) => ({ name: name, value: id }));
+
+                inquirer 
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'dept',
+                        message: 'What department does this role belong to?',
+                        choices: dept,
+                    },
+                ])
+                .then(deptChoice => {
+                    try {
+                        const dept = deptChoice.dept;
+                        console.log(dept);
+                        roleFields.push(dept);
+        
+                        const addRoleSQL = `INSERT INTO role(title, salary, department_id) VALUES(?, ?, ?);`;
+                        console.log(addRoleSQL);
+                        console.log(roleFields);
+                        connection.query(addRoleSQL, roleFields);
+                        console.log(`\n${answer.newDept} has been sucessfully added.\n`);
+                        viewAllRoles();
+                    } catch (error) {
+                        console.error(error);
+                    }
+                });
+            } catch (error) {
+                console.error(error);
+            } 
+        })();
+    });
 };
 
 const viewAllDepartments = async () => {
