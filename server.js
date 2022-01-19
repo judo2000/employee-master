@@ -28,7 +28,7 @@ const options = () => {
         } else if (response.action === 'Add Employee') {
             addEmployee();
         } else if (response.action === 'Update Employee Role') {
-           console.log('Update Employee Role');
+            updateEmpRole();
         } else if (response.action === 'View All Roles') {
             viewAllRoles();
         } else if (response.action === 'Add a Role') {
@@ -45,7 +45,7 @@ const options = () => {
 
 const viewAllEmployees = async () => {
     try {
-        const empSQL = "SELECT employee.firstName AS 'First Name', employee.lastName AS 'Last Name', role.title AS Title, role.salary AS Salary, department.name AS Department FROM employee INNER JOIN role ON employee.role_id = role.id JOIN department on role.department_id = department.id;";
+        const empSQL = "SELECT employee.id, employee.firstName AS 'First Name', employee.lastName AS 'Last Name', role.title AS Title, role.salary AS Salary, department.name AS Department FROM employee INNER JOIN role ON employee.role_id = role.id JOIN department on role.department_id = department.id;";
         const [ employees ] = await connection.query(empSQL);
         console.log('\n-----View All Employees-----\n')
         console.table(employees);
@@ -111,8 +111,68 @@ const addEmployee = () => {
                 console.error(error);
             }
         })();
-    })
-}
+    });
+};
+
+const updateEmpRole = async () => {
+    try {
+        // git list of employees
+        const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
+        const [ result ] = await connection.query(empSQL);
+        const employees = result.map(({ firstName, lastName, title, id }) => ({ name: `${firstName} ${lastName} ${title}`, value: id }));
+        
+        inquirer 
+        .prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: `Which employee's role would you like to update?`,
+                choices: employees,
+            },
+        ])
+        .then(empChoice => {
+            (async () => {
+                // save respone to new employee array
+                const newEmpFields = [empChoice.employee];
+                const roleList = 'SELECT id, title FROM role;';
+                const [ result ] = await connection.query(roleList);
+                const role = result.map(({ title, id}) => ({ name: title, value: id }));
+
+                // prompt user to select a new role for the new employee
+                inquirer 
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: 'Select a role for this employee:',
+                        choices: role,
+                    },
+                ])
+                .then(roleChoice => {
+                    try {
+                        // get selected role
+                        const role = roleChoice.role;
+                        // push role to new employee fields array
+                        newEmpFields.unshift(role);
+                        console.log(newEmpFields);
+                        // update selected employee with new role
+                        const updateEmpSQL = 'UPDATE employee SET role_id = ? WHERE id = ?;';
+                        connection.query(updateEmpSQL, newEmpFields);
+                        console.log(`\nEmployee's role has been sucessfully updated.\n`);
+                        // call view all employees function to see that the new role has been added
+                        viewAllEmployees();
+                    } catch (error) {
+                        console.error(error);
+                    }
+                })
+            })();
+        });
+    } catch (error) {
+        
+    }
+
+};
+
 const viewAllRoles = async () => {
     try {
         const rolesSQL = "SELECT role.title AS 'Title', role.salary AS 'Salary', department.name AS 'Department' FROM role JOIN department on role.department_id = department.id;";
