@@ -36,7 +36,7 @@ const options = () => {
         } else if (response.action === 'View All Departments') {
             viewAllDepartments();
         } else if (response.action === 'Add a Department') {
-            console.log('Add a Department')
+            addDepartment();
         } else if (response.action === 'Exit') {
             console.log('Exit')
         }
@@ -77,5 +77,26 @@ const viewAllDepartments = async () => {
     } catch (error) {
         console.error(error);
     }
-}
+};
+
+const addDepartment = () => {
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            name: 'newDept',
+            message: "What is the name of the new department?",
+        }
+    ])
+    .then(answer => {
+        try {
+            const insertDeptQuery = 'INSERT INTO department(name) VALUES(?);';
+            connection.query(insertDeptQuery, [answer.newDept]);
+            console.log(`\n${answer.newDept} has been sucessfully added.\n`);
+            viewAllDepartments();
+        } catch (error) {
+            console.error(error);
+        }
+    });
+};
 options();
