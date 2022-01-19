@@ -26,7 +26,7 @@ const options = () => {
         if (response.action === 'View All Employees') {
             viewAllEmployees();
         } else if (response.action === 'Add Employee') {
-            console.log('Add Enployee')
+            addEmployee();
         } else if (response.action === 'Update Employee Role') {
            console.log('Update Employee Role');
         } else if (response.action === 'View All Roles') {
@@ -55,6 +55,64 @@ const viewAllEmployees = async () => {
     }
 };
 
+const addEmployee = () => {
+    // prompt user for new employee first and last name
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            name: 'firstName',
+            message: `Please enter employee's first name:`,
+        },
+        {
+            type: 'input',
+            name: 'lastName',
+            message: `Please enter employee's last name:`,
+        },
+    ])
+    .then(answers => {
+        (async () => {
+            try {
+                // save the responses to an array
+                const newEmpFields = [answers.firstName, answers.lastName];
+                // get list of roles to aloow the user to select
+                // a role for this employee
+                const roleList = 'SELECT id, title FROM role;';
+                const [ result ] = await connection.query(roleList);
+                const role = result.map(({ title, id}) => ({ name: title, value: id }));
+
+                // prompt user to select a role for the new employee
+                inquirer 
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: 'Select a role for this employee:',
+                        choices: role,
+                    },
+                ])
+                .then(roleChoice => {
+                    try {
+                        // get selected role
+                        const role = roleChoice.role;
+                        // push role to new employee fields array
+                        newEmpFields.push(role);
+                        // insert new employee into employee table
+                        const addEmpSQL = 'INSERT INTO employee(firstName, lastName, role_id) VALUES(?, ?, ?);';
+                        connection.query(addEmpSQL, newEmpFields);
+                        console.log(`\n${answers.firstName} ${answers.lastName} has been sucessfully added.\n`);
+                        // call view all employees function to see that the new role has been added
+                        viewAllEmployees();
+                    } catch (error) {
+                        console.error(error);
+                    }
+                })
+            } catch (error) {
+                console.error(error);
+            }
+        })();
+    })
+}
 const viewAllRoles = async () => {
     try {
         const rolesSQL = "SELECT role.title AS 'Title', role.salary AS 'Salary', department.name AS 'Department' FROM role JOIN department on role.department_id = department.id;";
@@ -68,6 +126,7 @@ const viewAllRoles = async () => {
 };
 
 const addRole = () => {
+    // prompt the user for new role name and salary
     inquirer 
         .prompt([
         {
@@ -84,11 +143,15 @@ const addRole = () => {
     .then(answer => {
         (async () => {
             try {
+                // save the responses for the new role to an array 
                 const roleFields = [answer.newRoleName, Number(answer.newSalary)];
+                // get list of departments to aloow the user to select
+                // a department for this role
                 const deptList = "SELECT id, name FROM department;";
                 const [ result ] = await connection.query(deptList);
                 const dept = result.map(({ name, id }) => ({ name: name, value: id }));
-
+                
+                // prompt user to select department for new role
                 inquirer 
                 .prompt([
                     {
@@ -100,15 +163,15 @@ const addRole = () => {
                 ])
                 .then(deptChoice => {
                     try {
+                        // get selected department
                         const dept = deptChoice.dept;
-                        console.log(dept);
+                        // push department to role fields array
                         roleFields.push(dept);
-        
+                        // insert new role into role table
                         const addRoleSQL = `INSERT INTO role(title, salary, department_id) VALUES(?, ?, ?);`;
-                        console.log(addRoleSQL);
-                        console.log(roleFields);
                         connection.query(addRoleSQL, roleFields);
                         console.log(`\n${answer.newDept} has been sucessfully added.\n`);
+                        // call view all roles function to see that the new role has been added
                         viewAllRoles();
                     } catch (error) {
                         console.error(error);
