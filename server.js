@@ -82,10 +82,10 @@ const addRole = () => {
         },
     ])
     .then(answer => {
-        (async  () => {
+        (async () => {
             try {
                 const roleFields = [answer.newRoleName, Number(answer.newSalary)];
-                const deptList = "SELECT id, name FROM department"
+                const deptList = "SELECT id, name FROM department;";
                 const [ result ] = await connection.query(deptList);
                 const dept = result.map(({ name, id }) => ({ name: name, value: id }));
 
