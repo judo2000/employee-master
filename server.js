@@ -33,6 +33,7 @@ const options = () => {
               "Add a Role",
               "View All Departments",
               "Add a Department",
+              "Delete an Employee",
               "Quit",
             ],
           },
@@ -52,6 +53,8 @@ const options = () => {
             viewAllDepartments();
         } else if (response.action === 'Add a Department') {
             addDepartment();
+        } else if (response.action === 'Delete an Employee') {
+            deleteEmployee();
         } else if (response.action === 'Quit') {
             connection.end()
         }
@@ -245,7 +248,7 @@ const addRole = () => {
                         // insert new role into role table
                         const addRoleSQL = `INSERT INTO role(title, salary, department_id) VALUES(?, ?, ?);`;
                         connection.query(addRoleSQL, roleFields);
-                        console.log(`\n${answer.newDept} has been sucessfully added.\n`);
+                        console.log(`\n${answer.newRoleName} has been sucessfully added.\n`);
                         // call view all roles function to see that the new role has been added
                         viewAllRoles();
                     } catch (error) {
@@ -291,5 +294,37 @@ const addDepartment = () => {
         }
     });
 };
+
+const deleteEmployee = async () => {
+    try {
+        // git list of employees
+        const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
+        const [ result ] = await connection.query(empSQL);
+        const employees = result.map(({ firstName, lastName, id }) => ({ name: `${firstName} ${lastName}`, value: `${id}, ${firstName}, ${lastName}` }));
+        
+        inquirer 
+        .prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: `Which employee would you like to delete?`,
+                choices: employees,
+            },
+        ])
+        .then(empChoice => {
+            // get selected employee
+            const empFields = empChoice.employee.split(', ');
+            (async () => {
+                const delEmpSQL = 'DELETE FROM employee WHERE id = ?;';
+                const delEmp = await connection.query(delEmpSQL, Number(empFields[0]));
+                
+                console.log(`\n${empFields[1]} ${empFields[2]} has been deleted.\n`)
+                viewAllEmployees();
+            })();
+        })
+    } catch (error) {
+        console.error (error);
+    }
+}
 // call the options function to show the menu to the user
 options();
