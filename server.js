@@ -34,6 +34,7 @@ const options = () => {
               "View All Departments",
               "Add a Department",
               "Delete an Employee",
+              "Delete a Department",
               "Quit",
             ],
           },
@@ -55,6 +56,8 @@ const options = () => {
             addDepartment();
         } else if (response.action === 'Delete an Employee') {
             deleteEmployee();
+        } else if (response.action === 'Delete a Department') {
+            deleteDepartment();
         } else if (response.action === 'Quit') {
             connection.end()
         }
@@ -297,7 +300,7 @@ const addDepartment = () => {
 
 const deleteEmployee = async () => {
     try {
-        // git list of employees
+        // get list of employees
         const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
         const [ result ] = await connection.query(empSQL);
         const employees = result.map(({ firstName, lastName, id }) => ({ name: `${firstName} ${lastName}`, value: `${id}, ${firstName}, ${lastName}` }));
@@ -318,12 +321,40 @@ const deleteEmployee = async () => {
                 const delEmpSQL = 'DELETE FROM employee WHERE id = ?;';
                 const delEmp = await connection.query(delEmpSQL, Number(empFields[0]));
                 
-                console.log(`\n${empFields[1]} ${empFields[2]} has been deleted.\n`)
+                console.log(`\n${empFields[1]} ${empFields[2]} has been removed.\n`)
                 viewAllEmployees();
             })();
         })
     } catch (error) {
         console.error (error);
+    }
+}
+
+const deleteDepartment = async () => {
+    try {
+        const deptSQL = 'SELECT * FROM department;';
+        const [ result ] = await connection.query(deptSQL);
+        const departments = result.map(({ name, id }) => ({ name: name, value: `${id}, ${name}` }));
+        
+        inquirer 
+        .prompt([
+            {
+                type: 'list',
+                name: 'dept',
+                message: 'Which department would you like to delete?',
+                choices: departments,
+            },
+        ])
+        .then(deptChoice => {
+            const deptFields = deptChoice.dept.split(', ');
+            (async () => {
+                const delDeptSQL = 'DELETE FROM department WHERE id = ?;';
+                const delDept = await connection.query(delDeptSQL, Number(deptFields[0]));
+                console.log(`\nThe department, ${deptFields[1]}, has been deleted.\n`)
+            })();
+        })
+    } catch (error) {
+        console.error(error);
     }
 }
 // call the options function to show the menu to the user
