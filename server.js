@@ -1,7 +1,22 @@
 const connection = require('./connection');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
-const { connect } = require('./connection');
+
+const welcome = () => {
+    console.log(`
+     ___________________________________________________________________
+    |                        Welcome to                                 |
+    |                           The                                     |
+    |            ____  _   _   __       ___       ____  ____            |
+    |           |____ | \\ / | |__| |   |   | \\ / |____ |____            |
+    |           |____ |     | |    |__ |___|  |  |____ |____            |
+    |               _   _    _          _    __   __   __               |
+    |              | \\ / |  /_\\  |\\ |  /_\\  | _  |_   |__|              |
+    |              |     | /   \\ | \\| /   \\ |__| |__  |  \\              |
+    |___________________________________________________________________|`)
+console.log('\n')
+}
+welcome();
 
 const options = () => {
     inquirer
@@ -18,7 +33,7 @@ const options = () => {
               "Add a Role",
               "View All Departments",
               "Add a Department",
-              "Exit",
+              "Quit",
             ],
           },
     ])
@@ -37,8 +52,8 @@ const options = () => {
             viewAllDepartments();
         } else if (response.action === 'Add a Department') {
             addDepartment();
-        } else if (response.action === 'Exit') {
-            console.log('Exit')
+        } else if (response.action === 'Quit') {
+            connection.end()
         }
     });
 };
@@ -276,4 +291,5 @@ const addDepartment = () => {
         }
     });
 };
+// call the options function to show the menu to the user
 options();
