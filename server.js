@@ -44,6 +44,7 @@ const options = () => {
               "Delete an Employee",
               "Delete a Department",
               "Delete a Role",
+              "Show Budget by Department",
               "Quit",
             ],
           },
@@ -74,6 +75,8 @@ const options = () => {
             deleteDepartment();
         } else if (answer.task === 'Delete a Role') {
             deleteRole();
+        } else if (answer.task === 'Show Budget by Department') {
+            budgetByDept();
         } else if (answer.task === 'Quit') {
             connection.end()
         }
@@ -514,5 +517,23 @@ const deleteRole = async () => {
         console.error(error);
     }
 }
+
+const budgetByDept = async () => {
+    try {
+        console.log(`\n-----Display Budget by Department-----\n`)
+        budgetSQL = `SELECT department_id AS Id,
+                        department.name AS Department,
+                        SUM(salary) AS Budget
+                      FROM role
+                        JOIN department ON role.department_id = department.id
+                        GROUP BY  department_id;`;
+        const [ budget ] = await connection.query(budgetSQL);
+        console.table(budget);
+        options();
+
+    } catch (error) {
+        console.error(error);
+    }
+};
 // call the options function to show the menu to the user
 options();
