@@ -4,6 +4,7 @@ const connection = require('./connection');
 const inquirer = require('inquirer');
 // input console.table for better table display
 const cTable = require('console.table');
+const { listenerCount } = require('./connection');
 
 // function to display welcome message
 const welcome = () => {
@@ -36,6 +37,7 @@ const options = () => {
               "Add Employee",
               "Update Employee Role",
               "Update Employee's Manager",
+              "View Employees by Manager",
               "View All Roles",
               "Add a Role",
               "View All Departments",
@@ -59,6 +61,8 @@ const options = () => {
             updateEmpRole();
         } else if (answer.task === 'Update Employee\'s Manager') {
             updateEmpManager();
+        } else if (answer.task === "View Employees by Manager") {
+            viewEmpByManager();
         } else if (answer.task === 'View All Roles') {
             viewAllRoles();
         } else if (answer.task === 'Add a Role') {
@@ -531,6 +535,55 @@ const budgetByDept = async () => {
         console.table(budget);
         options();
 
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+const viewEmpByManager = async () => {
+    console.log(`\n View Employees by Manager\n`)
+    try {
+        const empByManagerSQL = `SELECT DISTINCT m.firstName, m.lastName, m.id, CONCAT(m.firstName, ' ', m.lastName) AS Manager FROM employee e INNER JOIN employee m ON e.manager_id = m.id;`; 
+        const [ result ] = await connection.query(empByManagerSQL);
+        const managers = result.map(({ firstName, lastName, id }) => ({ name: `${firstName} ${lastName}`, value: `${id}, ${firstName}, ${lastName}` }));
+        managers.push('Back to Main Menu');
+        inquirer 
+        .prompt([
+            {
+                type: 'list',
+                name: 'manager',
+                message: `Which manager's employees would you like to see?`,
+                choices: managers
+            },
+        ])
+        .then(managerChoice => {
+            console.log(managerChoice.manager);
+            if (managerChoice.manager === 'Back to Main Menu') {
+                return options();
+            }
+            const managerFields = managerChoice.manager.split(', ');
+            console.log(managerFields[0]);
+            (async () => {
+                try {
+                    const empSQL = `SELECT employee.firstName AS 'First Name',
+                                        employee.lastName AS 'Last Name',
+                                        role.title AS Title,
+                                        department.name AS Department
+                                    FROM employee
+                                        LEFT JOIN role ON employee.role_id = role.id
+                                        LEFT JOIN department ON role.department_id = department.id
+                                    WHERE manager_id = ?`;
+                                
+                    const [ empByManager ] = await connection.query(empSQL, Number(managerFields[0]));
+                    console.log(`\n Employees managed by ${managerFields[1]} ${managerFields[2]}\n`);
+                    console.table(empByManager);
+                    viewEmpByManager();
+                } catch (error) {
+                    console.error(error);
+                }
+            })()
+            
+        })
     } catch (error) {
         console.error(error);
     }
