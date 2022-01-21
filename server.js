@@ -212,7 +212,11 @@ const updateEmpRole = async () => {
 
 const viewAllRoles = async () => {
     try {
-        const rolesSQL = "SELECT role.title AS 'Title', role.salary AS 'Salary', department.name AS 'Department' FROM role JOIN department on role.department_id = department.id;";
+        const rolesSQL = `SELECT role.title AS 'Title', 
+                            role.salary AS 'Salary', 
+                            department.name AS 'Department' 
+                          FROM role 
+                          LEFT JOIN department on role.department_id = department.id;`;
         const [ roles ] = await connection.query(rolesSQL);
         console.log('\n-----View All Roles-----\n');
         console.table(roles);
@@ -314,38 +318,7 @@ const addDepartment = () => {
     });
 };
 
-const deleteEmployee = async () => {
-    try {
-        // get list of employees
-        const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
-        const [ result ] = await connection.query(empSQL);
-        const employees = result.map(({ firstName, lastName, id }) => ({ name: `${firstName} ${lastName}`, value: `${id}, ${firstName}, ${lastName}` }));
-        
-        inquirer 
-        .prompt([
-            {
-                type: 'list',
-                name: 'employee',
-                message: `Which employee would you like to delete?`,
-                choices: employees,
-            },
-        ])
-        .then(empChoice => {
-            // get selected employee
-            const empFields = empChoice.employee.split(', ');
-            (async () => {
-                const delEmpSQL = 'DELETE FROM employee WHERE id = ?;';
-                const delEmp = await connection.query(delEmpSQL, Number(empFields[0]));
-                
-                console.log(`\n${empFields[1]} ${empFields[2]} has been removed.\n`)
-                viewAllEmployees();
-            })();
-        })
-    } catch (error) {
-        console.error (error);
-    }
-}
-
+// function to view employees by department
 const employeeByDept = async () => {
     try {
         const empByDeptSQL = `SELECT employee.firstName AS 'First Name',
@@ -364,7 +337,41 @@ const employeeByDept = async () => {
         console.error(error);
     }
 };
+// function to delete employee
+const deleteEmployee = async () => {
+    try {
+        // get list of employees
+        const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
+        const [ result ] = await connection.query(empSQL);
+        const employees = result.map(({ firstName, lastName, id }) => ({ name: `${firstName} ${lastName}`, value: `${id}, ${firstName}, ${lastName}` }));
+        
+        // prompt user to select employee to delete
+        inquirer 
+        .prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: `Which employee would you like to delete?`,
+                choices: employees,
+            },
+        ])
+        .then(empChoice => {
+            // get selected employee
+            const empFields = empChoice.employee.split(', ');
+            (async () => {
+                const delEmpSQL = 'DELETE FROM employee WHERE id = ?;';
+                await connection.query(delEmpSQL, Number(empFields[0]));
+                
+                console.log(`\n${empFields[1]} ${empFields[2]} has been removed.\n`)
+                viewAllEmployees();
+            })();
+        })
+    } catch (error) {
+        console.error (error);
+    }
+}
 
+// function to delete a department
 const deleteDepartment = async () => {
     try {
         const deptSQL = 'SELECT * FROM department;';
@@ -394,6 +401,7 @@ const deleteDepartment = async () => {
     }
 }
 
+// function to delete a role
 const deleteRole = async () => {
     try {
         const roleSQL = 'SELECT * FROM role;';
