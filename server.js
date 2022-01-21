@@ -219,7 +219,10 @@ const updateEmpManager = async () => {
          // get list of employees
          const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
          const [ result ] = await connection.query(empSQL);
-         const employees = result.map(({ firstName, lastName, title, id }) => ({ name: `${firstName} ${lastName} ${title}`, value: id }));
+         // create an array with employee information
+         // include first and last name in value so wc can 
+         // access them in the final concole.log
+         const employees = result.map(({ firstName, lastName, title, id }) => ({ name: `${firstName} ${lastName} ${title}`, value: `${id}, ${firstName}, ${lastName}` }));
          
          // prompt user to select employee to update
          inquirer 
@@ -233,7 +236,8 @@ const updateEmpManager = async () => {
          ])
          .then(empChoice => {
              (async () => {
-                const empFields = [empChoice.employee];
+                const empFields = empChoice.employee.split(', ');
+                console.log(empFields);
                 const managerSQL = `SELECT employee.id, 
                                         employee.firstName, 
                                         employee.lastName, 
@@ -241,7 +245,7 @@ const updateEmpManager = async () => {
                                     FROM employee 
                                     LEFT JOIN role ON employee.role_id = role.id
                                     WHERE employee.id <> ?;`;
-                const [ result ] = await connection.query(managerSQL, empChoice.employee);
+                const [ result ] = await connection.query(managerSQL, empFields[0]);
                 const managers = result.map(({ firstName, lastName, title, id }) => ({ name: `${firstName} ${lastName} ${title}`, value: id }));
 
                 // prompt user to select a manager
@@ -255,12 +259,11 @@ const updateEmpManager = async () => {
                     },
                 ])
                 .then(managerChoice => {
-                    console.log(empChoice);
                     empFields.unshift(managerChoice.manager);
                     // update selected employee with new manager
                     const updateEmpSQL = 'UPDATE employee SET manager_id = ? WHERE id = ?;';
                     connection.query(updateEmpSQL, empFields);
-                    console.log(`\nEmployee's manager has been updated\n`);
+                    console.log(`\n${empFields[2]} ${empFields[3]}'s manager has been updated`);
                     viewAllEmployees();
                 })
              })();
@@ -484,7 +487,7 @@ const deleteRole = async () => {
             },
         ])
         .then(roleChoice => {
-            const roleFields =roleChoice.roles.split(', ');
+            const roleFields = roleChoice.roles.split(', ');
             (async () => {
                 const delRoleSQL = 'DELETE FROM role WHERE id = ?;';
                 const delRole = await connection.query(delRoleSQL, Number(roleFields[0]));
