@@ -33,6 +33,7 @@ const options = () => {
               "Add a Role",
               "View All Departments",
               "Add a Department",
+              "View Employees by Department",
               "Delete an Employee",
               "Delete a Department",
               "Delete a Role",
@@ -55,6 +56,8 @@ const options = () => {
             viewAllDepartments();
         } else if (answer.action === 'Add a Department') {
             addDepartment();
+        } else if (answer.action === 'View Employees by Department') {
+            employeeByDept();
         } else if (answer.action === 'Delete an Employee') {
             deleteEmployee();
         } else if (answer.action === 'Delete a Department') {
@@ -69,7 +72,17 @@ const options = () => {
 
 const viewAllEmployees = async () => {
     try {
-        const empSQL = "SELECT employee.id, employee.firstName AS 'First Name', employee.lastName AS 'Last Name', role.title AS Title, role.salary AS Salary, department.name AS Department FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department on role.department_id = department.id;";
+        const empSQL = `SELECT employee.id, 
+                            employee.firstName AS 'First Name', 
+                            employee.lastName AS 'Last Name', 
+                            role.title AS Title, 
+                            role.salary AS Salary, 
+                            department.name AS Department,
+                            CONCAT (manager.firstName, " ", manager.lastName) AS Manager
+                        FROM employee 
+                            LEFT JOIN role ON employee.role_id = role.id 
+                            LEFT JOIN department on role.department_id = department.id
+                            LEFT JOIN employee manager ON employee.manager_id = manager.id;`;
         const [ employees ] = await connection.query(empSQL);
         console.log('\n-----View All Employees-----\n')
         console.table(employees);
@@ -332,6 +345,25 @@ const deleteEmployee = async () => {
         console.error (error);
     }
 }
+
+const employeeByDept = async () => {
+    try {
+        const empByDeptSQL = `SELECT employee.firstName AS 'First Name',
+                                employee.lastName AS 'Last Name',
+                                role.title AS Title,
+                                department.name AS Department
+                              FROM employee
+                                LEFT JOIN role ON employee.role_id = role.id
+                                LEFT JOIN department ON role.department_id = department.id;`;
+        
+        const [ employees ] = await connection.query(empByDeptSQL);
+        console.log('\n-----View Employees by Department-----\n')
+        console.table(employees);
+        options();
+    } catch (error) {
+        console.error(error);
+    }
+};
 
 const deleteDepartment = async () => {
     try {

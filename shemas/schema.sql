@@ -26,6 +26,8 @@ CREATE TABLE employee (
     lastName VARCHAR(30),
     role_id INT,
     manager_id INT,
+    INDEX manager_ind (manager_id),
+    CONSTRAINT fk_manager FOREIGN KEY (manager_id) REFERENCES employee(id) ON DELETE SET NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (role_id)
     REFERENCES role(id)
