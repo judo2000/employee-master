@@ -407,19 +407,47 @@ const addDepartment = () => {
 
 // function to view employees by department
 const employeeByDept = async () => {
+    console.log(`\n View Employees by Manager\n`)
     try {
-        const empByDeptSQL = `SELECT employee.firstName AS 'First Name',
-                                employee.lastName AS 'Last Name',
-                                role.title AS Title,
-                                department.name AS Department
-                              FROM employee
-                                LEFT JOIN role ON employee.role_id = role.id
-                                LEFT JOIN department ON role.department_id = department.id;`;
-        
-        const [ employees ] = await connection.query(empByDeptSQL);
-        console.log('\n-----View Employees by Department-----\n')
-        console.table(employees);
-        options();
+        const deptSQL = "SELECT id AS 'Id', name AS 'Name' FROM department;";
+        const [ result ] = await connection.query(deptSQL);
+        const depts = result.map(({ Name, Id }) => ({ name: Name, value: `${Id}, ${Name}` }));
+        depts.push('Back to Main Menu');
+        inquirer 
+        .prompt([
+            {
+                type: 'list',
+                name: 'department',
+                message: `Which deparement's employees would you like to see?`,
+                choices: depts,
+            },
+        ])
+        .then(deptChoice => {
+            if (deptChoice.department === 'Back to Main Menu') {
+                return options();
+            }
+            const deptFields = deptChoice.department.split(', ');
+            (async () => {
+                try {
+                    const empSQL = `SELECT employee.firstName AS 'First Name',
+                                        employee.lastName AS 'Last Name',
+                                        role.title AS Title,
+                                        department.name AS Department
+                                    FROM employee
+                                        INNER JOIN role ON employee.role_id = role.id
+                                        INNER JOIN department ON role.department_id = department.id
+                                    WHERE department.id = ?`;
+                                
+                    const [ empByDept ] = await connection.query(empSQL, Number(deptFields[0]));
+                    console.log(`\n Employees in the ${deptFields[1]} department\n`);
+                    console.table(empByDept);
+                    employeeByDept();
+                } catch (error) {
+                    console.error(error);
+                }
+            })()
+            
+        })
     } catch (error) {
         console.error(error);
     }
@@ -540,6 +568,7 @@ const budgetByDept = async () => {
     }
 };
 
+
 const viewEmpByManager = async () => {
     console.log(`\n View Employees by Manager\n`)
     try {
@@ -557,7 +586,6 @@ const viewEmpByManager = async () => {
             },
         ])
         .then(managerChoice => {
-            console.log(managerChoice.manager);
             if (managerChoice.manager === 'Back to Main Menu') {
                 return options();
             }
