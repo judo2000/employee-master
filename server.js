@@ -175,7 +175,7 @@ const updateEmpRole = async () => {
     try {
         console.log(`\n-----Add an Employee's Role-----\n`)
         // git list of employees
-        const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
+        const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee LEFT JOIN role ON employee.role_id = role.id;";
         const [ result ] = await connection.query(empSQL);
         const employees = result.map(({ firstName, lastName, title, id }) => ({ name: `${firstName} ${lastName} ${title}`, value: id }));
         
