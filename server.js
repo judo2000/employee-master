@@ -35,30 +35,33 @@ const options = () => {
               "Add a Department",
               "Delete an Employee",
               "Delete a Department",
+              "Delete a Role",
               "Quit",
             ],
           },
     ])
-    .then(response => {
-        if (response.action === 'View All Employees') {
+    .then(answer => {
+        if (answer.action === 'View All Employees') {
             viewAllEmployees();
-        } else if (response.action === 'Add Employee') {
+        } else if (answer.action === 'Add Employee') {
             addEmployee();
-        } else if (response.action === 'Update Employee Role') {
+        } else if (answer.action === 'Update Employee Role') {
             updateEmpRole();
-        } else if (response.action === 'View All Roles') {
+        } else if (answer.action === 'View All Roles') {
             viewAllRoles();
-        } else if (response.action === 'Add a Role') {
+        } else if (answer.action === 'Add a Role') {
             addRole();
-        } else if (response.action === 'View All Departments') {
+        } else if (answer.action === 'View All Departments') {
             viewAllDepartments();
-        } else if (response.action === 'Add a Department') {
+        } else if (answer.action === 'Add a Department') {
             addDepartment();
-        } else if (response.action === 'Delete an Employee') {
+        } else if (answer.action === 'Delete an Employee') {
             deleteEmployee();
-        } else if (response.action === 'Delete a Department') {
+        } else if (answer.action === 'Delete a Department') {
             deleteDepartment();
-        } else if (response.action === 'Quit') {
+        } else if (answer.action === 'Delete a Role') {
+            deleteRole();
+        } else if (answer.action === 'Quit') {
             connection.end()
         }
     });
@@ -66,7 +69,7 @@ const options = () => {
 
 const viewAllEmployees = async () => {
     try {
-        const empSQL = "SELECT employee.id, employee.firstName AS 'First Name', employee.lastName AS 'Last Name', role.title AS Title, role.salary AS Salary, department.name AS Department FROM employee INNER JOIN role ON employee.role_id = role.id JOIN department on role.department_id = department.id;";
+        const empSQL = "SELECT employee.id, employee.firstName AS 'First Name', employee.lastName AS 'Last Name', role.title AS Title, role.salary AS Salary, department.name AS Department FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department on role.department_id = department.id;";
         const [ employees ] = await connection.query(empSQL);
         console.log('\n-----View All Employees-----\n')
         console.table(employees);
@@ -351,6 +354,36 @@ const deleteDepartment = async () => {
                 const delDeptSQL = 'DELETE FROM department WHERE id = ?;';
                 const delDept = await connection.query(delDeptSQL, Number(deptFields[0]));
                 console.log(`\nThe department, ${deptFields[1]}, has been deleted.\n`)
+                viewAllDepartments();
+            })();
+        })
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+const deleteRole = async () => {
+    try {
+        const roleSQL = 'SELECT * FROM role;';
+        const [ result ] = await connection.query(roleSQL);
+        const roles = result.map(({ title, id }) => ({ name: title, value: `${id}, ${title}` }));
+        
+        inquirer 
+        .prompt([
+            {
+                type: 'list',
+                name: 'roles',
+                message: 'Which role would you like to delete?',
+                choices: roles,
+            },
+        ])
+        .then(roleChoice => {
+            const roleFields =roleChoice.roles.split(', ');
+            (async () => {
+                const delRoleSQL = 'DELETE FROM role WHERE id = ?;';
+                const delRole = await connection.query(delRoleSQL, Number(roleFields[0]));
+                console.log(`\nThe role, ${roleFields[1]}, has been deleted.\n`)
+                viewAllRoles();
             })();
         })
     } catch (error) {
