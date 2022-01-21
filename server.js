@@ -1,7 +1,11 @@
+// import database connection
 const connection = require('./connection');
+// import inquirer to prompt users
 const inquirer = require('inquirer');
+// input console.table for better table display
 const cTable = require('console.table');
 
+// function to display welcome message
 const welcome = () => {
     console.log(`
      ___________________________________________________________________
@@ -16,15 +20,17 @@ const welcome = () => {
     |___________________________________________________________________|`)
 console.log('\n')
 }
+// call welcome function to display banner
 welcome();
 
+// function to prompt user to select a task
 const options = () => {
     inquirer
     .prompt([
         {
             type: "list",
             message: "What would you like to do?",
-            name: "action",
+            name: "task",
             choices: [
               "View All Employees",
               "Add Employee",
@@ -43,36 +49,38 @@ const options = () => {
           },
     ])
     .then(answer => {
-        if (answer.action === 'View All Employees') {
+        // get user response and call appropriate function
+        if (answer.task === 'View All Employees') {
             viewAllEmployees();
-        } else if (answer.action === 'Add Employee') {
+        } else if (answer.task === 'Add Employee') {
             addEmployee();
-        } else if (answer.action === 'Update Employee Role') {
+        } else if (answer.task === 'Update Employee Role') {
             updateEmpRole();
-        } else if (answer.action === 'Update Employee\'s Manager') {
+        } else if (answer.task === 'Update Employee\'s Manager') {
             updateEmpManager();
-        } else if (answer.action === 'View All Roles') {
+        } else if (answer.task === 'View All Roles') {
             viewAllRoles();
-        } else if (answer.action === 'Add a Role') {
+        } else if (answer.task === 'Add a Role') {
             addRole();
-        } else if (answer.action === 'View All Departments') {
+        } else if (answer.task === 'View All Departments') {
             viewAllDepartments();
-        } else if (answer.action === 'Add a Department') {
+        } else if (answer.task === 'Add a Department') {
             addDepartment();
-        } else if (answer.action === 'View Employees by Department') {
+        } else if (answer.task === 'View Employees by Department') {
             employeeByDept();
-        } else if (answer.action === 'Delete an Employee') {
+        } else if (answer.task === 'Delete an Employee') {
             deleteEmployee();
-        } else if (answer.action === 'Delete a Department') {
+        } else if (answer.task === 'Delete a Department') {
             deleteDepartment();
-        } else if (answer.action === 'Delete a Role') {
+        } else if (answer.task === 'Delete a Role') {
             deleteRole();
-        } else if (answer.action === 'Quit') {
+        } else if (answer.task === 'Quit') {
             connection.end()
         }
     });
 };
 
+// function to view all employees
 const viewAllEmployees = async () => {
     try {
         const empSQL = `SELECT employee.id, 
@@ -95,7 +103,9 @@ const viewAllEmployees = async () => {
     }
 };
 
+// function to add a new employee
 const addEmployee = () => {
+    console.log('\n-----Add an Employee-----\n')
     // prompt user for new employee first and last name
     inquirer
     .prompt([
@@ -120,7 +130,6 @@ const addEmployee = () => {
                 const roleList = 'SELECT id, title FROM role;';
                 const [ result ] = await connection.query(roleList);
                 const role = result.map(({ title, id}) => ({ name: title, value: id }));
-
                 // prompt user to select a role for the new employee
                 inquirer 
                 .prompt([
@@ -154,8 +163,10 @@ const addEmployee = () => {
     });
 };
 
+// function to update an employee's role
 const updateEmpRole = async () => {
     try {
+        console.log(`\n-----Add an Employee's Role-----\n`)
         // git list of employees
         const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
         const [ result ] = await connection.query(empSQL);
@@ -210,12 +221,12 @@ const updateEmpRole = async () => {
     } catch (error) {
         console.error(error)
     }
-
 };
 
 // function to update an employee's amanager
 const updateEmpManager = async () => {
     try {
+        console.log(`\n-----Add an Employee's Manager-----\n`)
          // get list of employees
          const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
          const [ result ] = await connection.query(empSQL);
@@ -267,8 +278,7 @@ const updateEmpManager = async () => {
                     viewAllEmployees();
                 })
              })();
-         });
-        
+         });    
     } catch (error) {
         console.error(error);
     }
@@ -293,6 +303,7 @@ const viewAllRoles = async () => {
 
 // function to add a role
 const addRole = () => {
+    console.log(`\n-----Add an New Role-----\n`)
     // prompt the user for new role name and salary
     inquirer 
         .prompt([
@@ -366,6 +377,7 @@ const viewAllDepartments = async () => {
 
 // function to add a department
 const addDepartment = () => {
+    console.log(`\n-----Add a Department-----\n`)
     inquirer
     .prompt([
         {
@@ -408,6 +420,7 @@ const employeeByDept = async () => {
 
 // function to delete employee
 const deleteEmployee = async () => {
+    console.log(`\n-----Delete an Employee-----\n`)
     try {
         // get list of employees
         const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
@@ -442,6 +455,7 @@ const deleteEmployee = async () => {
 
 // function to delete a department
 const deleteDepartment = async () => {
+    console.log(`\n-----Delete a Department-----\n`)
     try {
         const deptSQL = 'SELECT * FROM department;';
         const [ result ] = await connection.query(deptSQL);
@@ -472,6 +486,7 @@ const deleteDepartment = async () => {
 
 // function to delete a role
 const deleteRole = async () => {
+    console.log(`\n-----Delete a Role-----\n`)
     try {
         const roleSQL = 'SELECT * FROM role;';
         const [ result ] = await connection.query(roleSQL);
