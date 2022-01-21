@@ -29,6 +29,7 @@ const options = () => {
               "View All Employees",
               "Add Employee",
               "Update Employee Role",
+              "Update Employee's Manager",
               "View All Roles",
               "Add a Role",
               "View All Departments",
@@ -48,6 +49,8 @@ const options = () => {
             addEmployee();
         } else if (answer.action === 'Update Employee Role') {
             updateEmpRole();
+        } else if (answer.action === 'Update Employee\'s Manager') {
+            updateEmpManager();
         } else if (answer.action === 'View All Roles') {
             viewAllRoles();
         } else if (answer.action === 'Add a Role') {
@@ -205,11 +208,70 @@ const updateEmpRole = async () => {
             })();
         });
     } catch (error) {
-        
+        console.error(error)
     }
 
 };
 
+// function to update an employee's amanager
+const updateEmpManager = async () => {
+    try {
+         // get list of employees
+         const empSQL = "SELECT employee.id, employee.firstName, employee.lastName, role.title FROM employee INNER JOIN role ON employee.role_id = role.id;";
+         const [ result ] = await connection.query(empSQL);
+         const employees = result.map(({ firstName, lastName, title, id }) => ({ name: `${firstName} ${lastName} ${title}`, value: id }));
+         
+         // prompt user to select employee to update
+         inquirer 
+         .prompt([
+             {
+                 type: 'list',
+                 name: 'employee',
+                 message: `Which employee's manager would you like to update?`,
+                 choices: employees,
+             },
+         ])
+         .then(empChoice => {
+             (async () => {
+                const empFields = [empChoice.employee];
+                const managerSQL = `SELECT employee.id, 
+                                        employee.firstName, 
+                                        employee.lastName, 
+                                        role.title 
+                                    FROM employee 
+                                    LEFT JOIN role ON employee.role_id = role.id
+                                    WHERE employee.id <> ?;`;
+                const [ result ] = await connection.query(managerSQL, empChoice.employee);
+                const managers = result.map(({ firstName, lastName, title, id }) => ({ name: `${firstName} ${lastName} ${title}`, value: id }));
+
+                // prompt user to select a manager
+                inquirer 
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: 'Select a manager for this employee:',
+                        choices: managers,
+                    },
+                ])
+                .then(managerChoice => {
+                    console.log(empChoice);
+                    empFields.unshift(managerChoice.manager);
+                    // update selected employee with new manager
+                    const updateEmpSQL = 'UPDATE employee SET manager_id = ? WHERE id = ?;';
+                    connection.query(updateEmpSQL, empFields);
+                    console.log(`\nEmployee's manager has been updated\n`);
+                    viewAllEmployees();
+                })
+             })();
+         });
+        
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+// function to view roles
 const viewAllRoles = async () => {
     try {
         const rolesSQL = `SELECT role.title AS 'Title', 
@@ -226,6 +288,7 @@ const viewAllRoles = async () => {
     } 
 };
 
+// function to add a role
 const addRole = () => {
     // prompt the user for new role name and salary
     inquirer 
@@ -285,6 +348,7 @@ const addRole = () => {
     });
 };
 
+// function to view all departments
 const viewAllDepartments = async () => {
     try {
         const deptSQL = "SELECT id AS 'ID', name AS 'Name' FROM department;";
@@ -297,6 +361,7 @@ const viewAllDepartments = async () => {
     }
 };
 
+// function to add a department
 const addDepartment = () => {
     inquirer
     .prompt([
@@ -337,6 +402,7 @@ const employeeByDept = async () => {
         console.error(error);
     }
 };
+
 // function to delete employee
 const deleteEmployee = async () => {
     try {
