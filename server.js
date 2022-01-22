@@ -93,6 +93,7 @@ const viewAllEmployees = async () => {
         const empSQL = `SELECT employee.id, 
                             employee.firstName AS 'First Name', 
                             employee.lastName AS 'Last Name', 
+                            role.id AS 'Role Id',
                             role.title AS Title, 
                             role.salary AS Salary, 
                             department.name AS Department,

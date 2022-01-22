@@ -27,7 +27,8 @@
   <p align="right">(<a href="#top">back to top</a>)</p>
   
   ## Usage
-  
+  [Click here to view the demo](https://drive.google.com/file/d/13rsJeb7e7LW72nJZtWJYgX_JgY-sKOxR/view?usp=sharing).  
+
   [![Poject Name Screen Shot][project-screenshot1]](https://judo2000.github.io/img/project_screenshot1.png)  
   
   The app can be run on the user's local machine from the command line.  From within the employee master directory, run the command <code>node server.js</code>.  
